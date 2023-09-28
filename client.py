@@ -1,7 +1,7 @@
 import socket
 
 # Setup client to connect to server
-server_ip = '127.0.0.1'
+server_ip = '192.168.11.147'
 server_port = 8080
 
 # Create a socket object for the client
@@ -16,7 +16,7 @@ while True:
     message = input("You can now sent message to the server: ")
     client_socket.send(message.encode('utf-8'))
     # Check User status
-    if message.upper() == "EXIT":
+    if message.upper() == "Q":
         break
 
 # test response
