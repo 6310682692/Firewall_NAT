@@ -11,9 +11,13 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((server_ip, server_port))
 print(f"Connected to {server_ip}:{server_port}")
 
-# test sending data
-message = "Hello, server!"
-client_socket.send(message.encode('utf-8'))
+while True:
+    # test sending data
+    message = input("You can now sent message to the server: ")
+    client_socket.send(message.encode('utf-8'))
+    # Check User status
+    if message.upper() == "EXIT":
+        break
 
 # test response
 data = client_socket.recv(1024)
