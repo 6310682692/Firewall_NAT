@@ -35,10 +35,10 @@ def main():
     while True:
         # Accept a new connection
         client_socket, client_address = firewall_socket.accept()
-        print(f"Connection from {client_address}")
 
-        # Receive client IP, server IP, and server port
+         # Receive client IP, server IP, and server port
         client_ip, server_ip, server_port = client_socket.recv(1024).decode().strip().split(':')
+        print(f"Connection from {client_ip}")
 
         print(f"Received Client IP: {client_ip}, Server IP: {server_ip}, Server Port: {server_port}")
 
@@ -47,16 +47,34 @@ def main():
         if private_ip and private_port:
             print(f"Mapping to Private IP: {private_ip}, Port: {private_port}")
             client_socket.send(f"Connected to {server_ip}:{server_port}".encode())
+
+            try:
+                while True:
+                    data = client_socket.recv(1024).decode()
+                    if not data:
+                        print(f"Client from {client_ip} has disconnected.")
+                        break
+
+                    print(f"Received data from client: {data}")
+                    if data.upper() == 'Q':
+                        print(f"Client from {client_ip} has disconnected.")
+                        break
+
+            except Exception as e:
+                print(f"An error occurred: {e}")
+
+            finally:
+                client_socket.close()
+
             # Log the allowed connection
-            logging.info(f"ALLOWED - {client_ip} connect to {server_ip}:{server_port} mapped to {private_ip}:{private_port}")
+            logging.info(f"ALLOWED - {client_ip} connected to {server_ip}:{server_port} mapped to {private_ip}:{private_port}")
+
         else:
             print("Connection blocked by NAT firewall.")
             client_socket.send("Connection blocked by NAT firewall.".encode())
+            client_socket.close()
             # Log the blocked connection
             logging.info(f"BLOCKED - {client_ip}")
-
-        # Close the client socket
-        client_socket.close()
 
 if __name__ == "__main__":
     main()
