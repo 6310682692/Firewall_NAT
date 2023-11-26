@@ -45,7 +45,6 @@ def authenticate_user(auth_message):
     # Parse the authentication message
     _, username, password = auth_message.split(':')
 
-    # Perform authentication logic (replace with your actual authentication mechanism)
     # For simplicity, this example assumes a hard-coded username and password
     valid_username = "user"
     valid_password = "password"
