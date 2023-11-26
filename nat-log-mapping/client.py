@@ -19,6 +19,12 @@ try:
     # Receive response from the firewall
     response = client_socket.recv(1024).decode()
 
+    # User Login
+    username = input("Enter your username: ")
+    password = input("Enter your password: ")
+    auth_message = f"AUTH:{username}:{password}"
+    client_socket.send(auth_message.encode())
+
     if response == "Connection blocked by NAT firewall.":
         print("Connection blocked by the firewall")
     else:

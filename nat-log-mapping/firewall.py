@@ -1,5 +1,5 @@
 import socket
-import logging
+import logging  
 from datetime import datetime
 import secrets
 
@@ -16,7 +16,7 @@ NAT_MAPPING = {
 logging.basicConfig(filename='firewall_log.txt', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 # NAT Firewall function
-def nat_firewall(client_rec,public_ip, public_port):
+def nat_firewall(client_rec, public_ip, public_port):
     if client_rec in BLOCK_IPS:
         return None, None
     private_ip, private_port = NAT_MAPPING.get((public_ip, public_port), (None, None))
@@ -39,6 +39,18 @@ def generate_random_key():
 def encrypt_data(data, key):
     encrypted_data = bytes([a ^ b for a, b in zip(data.encode(), key)])
     return encrypted_data
+
+# Authenticate user function
+def authenticate_user(auth_message):
+    # Parse the authentication message
+    _, username, password = auth_message.split(':')
+
+    # Perform authentication logic (replace with your actual authentication mechanism)
+    # For simplicity, this example assumes a hard-coded username and password
+    valid_username = "user"
+    valid_password = "password"
+
+    return username == valid_username and password == valid_password
 
 # Main function
 def main():
@@ -71,37 +83,48 @@ def main():
                 print(f"Mapping to Private IP: {private_ip}, Port: {private_port}")
                 client_socket.send(f"Connected to {server_ip}:{server_port}".encode())
 
-                try:
-                    # Generate a random key for encryption
-                    encryption_key = generate_random_key()
+                # User Login
+                auth_message = client_socket.recv(1024).decode()
+                if authenticate_user(auth_message):
+                    _, username, _ = auth_message.split(':')
+                    print(f"User {username} authenticated successfully.")
 
-                    while True:
-                        data = client_socket.recv(1024).decode()
-                        if not data:
-                            print(f"Client from {client_ip} has disconnected.")
-                            break
+                    try:
+                        # Generate a random key for encryption
+                        encryption_key = generate_random_key()
 
-                        print(f"Received data from client: {data}")
+                        while True:
+                            data = client_socket.recv(1024).decode()
+                            if not data:
+                                print(f"Client from {client_ip} has disconnected.")
+                                break
 
-                        # Encrypt the data with the generated key
-                        encrypted_data = encrypt_data(data, encryption_key)
-                        
-                        # Log the encrypted data along with the key
-                        log_encrypted_data(client_ip, encrypted_data.hex(), encryption_key.hex())
+                            print(f"Received data from client: {data}")
 
-                        if data.upper() == 'Q':
-                            print(f"Client from {client_ip} has requested to disconnect.")
-                            break
+                            # Encrypt the data with the generated key
+                            encrypted_data = encrypt_data(data, encryption_key)
+                            
+                            # Log the encrypted data along with the key
+                            log_encrypted_data(client_ip, encrypted_data.hex(), encryption_key.hex())
 
-                except Exception as e:
-                    print(f"An error occurred: {e}")
+                            if data.upper() == 'Q':
+                                print(f"Client from {client_ip} has requested to disconnect.")
+                                break
 
-                finally:
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+
+                    finally:
+                        client_socket.close()
+                        print(f"Connection with {client_ip} closed.")
+
+                    # Log the allowed connection
+                    logging.info(f"ALLOWED - {client_ip} connected to {server_ip}:{server_port} mapped to {private_ip}:{private_port}")
+
+                else:
+                    print(f"Authentication failed for user {username}. Connection closed.")
+                    client_socket.send("Authentication failed. Connection closed.".encode())
                     client_socket.close()
-                    print(f"Connection with {client_ip} closed.")
-
-                # Log the allowed connection
-                logging.info(f"ALLOWED - {client_ip} connected to {server_ip}:{server_port} mapped to {private_ip}:{private_port}")
 
             else:
                 print("Connection blocked by NAT firewall.")
